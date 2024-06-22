@@ -21,9 +21,8 @@ protected:
     template< class T > void callback( T& cb, PGresult* res ) const { 
         sql_item_t arguments; array_t<string_t> col;
 
-        if( res == NULL ) {
-            process::error( PQerrorMessage(obj->fd) );
-        }
+        if ( res == NULL )
+           { process::error( PQerrorMessage(obj->fd) ); }
 
         int num_row = PQntuples( res );
         int num_col = PQnfields( res );
@@ -70,7 +69,7 @@ public:
         obj->fd = PQconnectdb( regex::format( "dbname=${0} host=${1} user=${2} password=${3} port=${4} sslcert=${5} sslkey=${6}",
             name, host, user, pass, port, crt, key
         ).get() ); if( PQstatus( obj->fd ) != CONNECTION_OK ) {
-            process::error("Can't connect to MySQL Server"); 
+            process::error( PQerrorMessage(obj->fd) ); 
         }
 
     }
@@ -87,7 +86,7 @@ public:
         obj->fd = PQconnectdb( regex::format( "dbname=${0} host=${1} user=${2} password=${3} port=${4}",
             name, host, user, pass, port
         ).get() ); if( PQstatus( obj->fd ) != CONNECTION_OK ) {
-            process::error("Can't connect to MySQL Server"); 
+            process::error( PQerrorMessage(obj->fd) ); 
         }
 
     }
