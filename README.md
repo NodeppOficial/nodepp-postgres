@@ -61,4 +61,4 @@ void onMain() {
 ```
 
 ## Compilation
-`g++ -o main main.cpp -I ./include -lmariadb -lssl -lcrypto ; ./main`
+`g++ -o main main.cpp -I ./include -lpq -lssl -lcrypto ; ./main`
