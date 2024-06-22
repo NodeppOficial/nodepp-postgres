@@ -1,4 +1,4 @@
-# NODEPP-MARIADB
+# NODEPP-POSTGRES
 Run **PostgresDB** in Nodepp
 
 ## Dependencies
