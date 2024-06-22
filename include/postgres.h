@@ -18,7 +18,7 @@ protected:
         int state = 1;
     };  ptr_t<NODE> obj;
 
-    template< class T > void callback( T& cb, PGresult* res ) { 
+    template< class T > void callback( T& cb, PGresult* res ) const { 
         sql_item_t arguments; array_t<string_t> col;
 
         if( result == NULL ) {
@@ -38,7 +38,6 @@ protected:
              arguments[ col[y] ] = data ? data : "NULL"; 
         } cb(arguments); }
 
-        PQclear(res);
     }
 
 public:
@@ -96,15 +95,15 @@ public:
     
     /*─······································································─*/
 
-    void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) {
+    void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) const {
         PGresult *res = PQexec( obj->fd, cmd.data() );
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) {
              process::error( PQerrorMessage(obj->fd) );
              PQclear(res); return;
-        }    callback( cb, res );
+        }    callback( cb, res ); PQclear(res);
     }
 
-    void exec( const string_t& cmd ) {
+    void exec( const string_t& cmd ) const {
         PGresult *res = PQexec( obj->fd, cmd.data() );
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) {
              process::error( PQerrorMessage(obj->fd) );
