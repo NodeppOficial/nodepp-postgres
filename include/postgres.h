@@ -14,15 +14,16 @@ namespace nodepp { class postgres_t {
 protected:
 
     struct NODE {
-        PGconn *fd;
+        PGconn *fd = nullptr;
         int state = 1;
     };  ptr_t<NODE> obj;
 
     template< class T > void callback( T& cb, PGresult* res ) const { 
         sql_item_t arguments; array_t<string_t> col;
 
-        if ( res == NULL )
-           { process::error( PQerrorMessage(obj->fd) ); }
+        if ( res != PGRES_TUPLES_OK ){ PQclear( res );
+            process::error( PQerrorMessage(obj->fd) ); 
+        }
 
         int num_row = PQntuples( res );
         int num_col = PQnfields( res );
@@ -35,7 +36,8 @@ protected:
              auto data = PQgetvalue( res, x, y );
              arguments[ col[y] ] = data ? data : "NULL"; 
         } cb(arguments); }
-
+ 
+        PQclear(res);
     }
 
 public:
@@ -63,11 +65,8 @@ public:
         auto pass = url::pass( uri );
         auto port = url::port( uri );
 
-        char* key = ssl->get_key_path()==nullptr ? nullptr : ssl->get_key_path().get();
-        char* crt = ssl->get_crt_path()==nullptr ? nullptr : ssl->get_crt_path().get();
-
         obj->fd = PQconnectdb( regex::format( "dbname=${0} host=${1} user=${2} password=${3} port=${4} sslcert=${5} sslkey=${6}",
-            name, host, user, pass, port, crt, key
+            name, host, user, pass, port, ssl->get_crt_path(), ssl->get_key_path()
         ).get() ); if( PQstatus( obj->fd ) != CONNECTION_OK ) {
             process::error( PQerrorMessage(obj->fd) ); 
         }
@@ -86,7 +85,7 @@ public:
         obj->fd = PQconnectdb( regex::format( "dbname=${0} host=${1} user=${2} password=${3} port=${4}",
             name, host, user, pass, port
         ).get() ); if( PQstatus( obj->fd ) != CONNECTION_OK ) {
-            process::error( PQerrorMessage(obj->fd) ); 
+            process::error( PQerrorMessage(obj->fd) );
         }
 
     }
@@ -95,17 +94,15 @@ public:
 
     void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) const {
         PGresult *res = PQexec( obj->fd, cmd.data() );
-        if ( PQresultStatus(res) != PGRES_TUPLES_OK ) {
+        if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-             PQclear(res); return;
-        }    callback( cb, res ); PQclear(res);
+        }    callback( cb, res );
     }
 
     void exec( const string_t& cmd ) const {
         PGresult *res = PQexec( obj->fd, cmd.data() );
-        if ( PQresultStatus(res) != PGRES_TUPLES_OK ) {
+        if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-             PQclear(res); return;
         }    PQclear(res);
     }
 
