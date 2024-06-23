@@ -1,5 +1,5 @@
-#ifndef NODEPP_SQLITE
-#define NODEPP_SQLITE
+#ifndef NODEPP_POSTGRES
+#define NODEPP_POSTGRES
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
