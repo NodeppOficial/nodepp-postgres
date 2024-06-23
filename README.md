@@ -3,7 +3,7 @@ Run **PostgresDB** in Nodepp
 
 ## Dependencies
 
-- postgress-dev
+- postgres-dev
   - 🪟: `pacman -S mingw-w64-x86_64-postgresql`
   - 🐧: `sudo apt install libpq-dev`
 
