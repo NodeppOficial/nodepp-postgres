@@ -6,7 +6,6 @@
 #include <postgresql/libpq-fe.h>
 #include <nodepp/nodepp.h>
 #include <nodepp/url.h>
-#include <nodepp/ssl.h>
 
 namespace nodepp { using sql_item_t = map_t<string_t,string_t>; }
 
@@ -15,13 +14,13 @@ protected:
 
     struct NODE {
         PGconn *fd = nullptr;
-        int state = 1;
+        int  state = 1;
     };  ptr_t<NODE> obj;
 
     template< class T > void callback( T& cb, PGresult* res ) const { 
         sql_item_t arguments; array_t<string_t> col;
 
-        if ( res != PGRES_TUPLES_OK ){ PQclear( res );
+        if ( PQresultStatus(res) != PGRES_TUPLES_OK ){ PQclear( res );
             process::error( PQerrorMessage(obj->fd) ); 
         }
 
@@ -29,7 +28,7 @@ protected:
         int num_col = PQnfields( res );
 
         for( int x=0; x<num_row; x++ )
-           { col.push( PQgetvalue(res,x,0) ); }
+           { col.push( PQgetvalue( res, x, 0 ) ); }
 
         for( int y=1; y<num_col; y++ ){
         for( int x=0; x<num_row; x++ ){
@@ -58,6 +57,7 @@ public:
     
     /*─······································································─*/
     
+#ifdef NODEPP_SSL
     postgres_t ( string_t uri, string_t name, ssl_t* ssl ) : obj( new NODE ) {
 
         auto host = url::hostname( uri );
@@ -72,6 +72,7 @@ public:
         }
 
     }
+#endif
     
     /*─······································································─*/
     
@@ -99,11 +100,12 @@ public:
         }    callback( cb, res );
     }
 
-    void exec( const string_t& cmd ) const {
+    array_t<sql_item_t> exec( const string_t& cmd ) const { array_t<sql_item_t> arr;
+        function_t<void,sql_item_t> cb = [&]( sql_item_t args ){ arr.push( args ); };
         PGresult *res = PQexec( obj->fd, cmd.data() );
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-        }    PQclear(res);
+        }    callback( cb, res ); return arr;
     }
 
 };}
