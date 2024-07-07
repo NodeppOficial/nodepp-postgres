@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    template< class T, class U, class V > gnEmit( T& fd, U& res, V& cb ){
+    template< class T, class U, class V, class Q > gnEmit( T& fd, U& res, V& cb, Q& self ){
     gnStart
 
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ){ PQclear(res);
@@ -120,9 +120,10 @@ public:
 
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-        }    
-        
-        _postgres_::cb task; process::add( task, obj->fd, res, cb );
+        }
+
+        auto self = type::bind( this );
+        _postgres_::cb task; process::add( task, obj->fd, res, cb, self );
     }
 
     array_t<sql_item_t> exec( const string_t& cmd ) const { array_t<sql_item_t> arr;
@@ -131,9 +132,10 @@ public:
 
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-        }    
-        
-        _postgres_::cb task; process::await( task, obj->fd, res, cb ); return arr;
+        }
+
+        auto self = type::bind( this );
+        _postgres_::cb task; process::await( task, obj->fd, res, cb, self ); return arr;
     }
 
 };}
