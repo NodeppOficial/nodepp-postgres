@@ -24,10 +24,6 @@ public:
     template< class T, class U, class V, class Q > gnEmit( T& fd, U& res, V& cb, Q& self ){
     gnStart
 
-        if ( PQresultStatus(res) != PGRES_TUPLES_OK ){ PQclear(res);
-             process::error( PQerrorMessage(fd) ); 
-        }
-
         num_row = PQntuples(res); 
         num_col = PQnfields(res);
 
