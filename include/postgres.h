@@ -7,6 +7,50 @@
 #include <nodepp/nodepp.h>
 #include <nodepp/url.h>
 
+/*────────────────────────────────────────────────────────────────────────────*/
+
+#ifndef NODEPP_POSTGRES_GENERATOR
+#define NODEPP_POSTGRES_GENERATOR
+
+namespace nodepp { namespace _postgres_ { GENERATOR(cb) {
+protected:
+    
+    map_t<string_t,string_t> arguments; 
+    int x, y, num_row, num_col;
+    array_t<string_t> col;
+
+public:
+
+    template< class T, class U, class V > gnEmit( T& fd, U& res, V& cb ){
+    gnStart
+
+        if ( PQresultStatus(res) != PGRES_TUPLES_OK ){ PQclear(res);
+             process::error( PQerrorMessage(fd) ); 
+        }
+
+        num_row = PQntuples(res); 
+        num_col = PQnfields(res);
+
+        for( x=0; x<num_row; x++ )
+           { col.push( PQgetvalue( res, x, 0 ) ); }
+
+        for( y=1; y<num_col; y++ ){
+        for( x=0; x<num_row; x++ ){
+             auto data = PQgetvalue( res, x, y );
+             arguments[ col[y] ] = data ? data : "NULL"; 
+        } cb(arguments); coNext; }
+ 
+        PQclear(res);
+
+    gnStop
+    }
+
+};}}
+
+#endif
+
+/*────────────────────────────────────────────────────────────────────────────*/
+
 namespace nodepp { using sql_item_t = map_t<string_t,string_t>; }
 
 namespace nodepp { class postgres_t {
@@ -16,28 +60,6 @@ protected:
         PGconn *fd = nullptr;
         int  state = 1;
     };  ptr_t<NODE> obj;
-
-    template< class T > void callback( T& cb, PGresult* res ) const { 
-        sql_item_t arguments; array_t<string_t> col;
-
-        if ( PQresultStatus(res) != PGRES_TUPLES_OK ){ PQclear( res );
-            process::error( PQerrorMessage(obj->fd) ); 
-        }
-
-        int num_row = PQntuples( res );
-        int num_col = PQnfields( res );
-
-        for( int x=0; x<num_row; x++ )
-           { col.push( PQgetvalue( res, x, 0 ) ); }
-
-        for( int y=1; y<num_col; y++ ){
-        for( int x=0; x<num_row; x++ ){
-             auto data = PQgetvalue( res, x, y );
-             arguments[ col[y] ] = data ? data : "NULL"; 
-        } cb(arguments); }
- 
-        PQclear(res);
-    }
 
 public:
     
@@ -95,17 +117,23 @@ public:
 
     void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) const {
         PGresult *res = PQexec( obj->fd, cmd.data() );
+
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-        }    callback( cb, res );
+        }    
+        
+        _postgres_::cb task; process::add( task, obj->fd, res, cb );
     }
 
     array_t<sql_item_t> exec( const string_t& cmd ) const { array_t<sql_item_t> arr;
         function_t<void,sql_item_t> cb = [&]( sql_item_t args ){ arr.push( args ); };
         PGresult *res = PQexec( obj->fd, cmd.data() );
+
         if ( PQresultStatus(res) != PGRES_TUPLES_OK ) { PQclear(res); 
              process::error( PQerrorMessage(obj->fd) );
-        }    callback( cb, res ); return arr;
+        }    
+        
+        _postgres_::cb task; process::await( task, obj->fd, res, cb ); return arr;
     }
 
 };}
