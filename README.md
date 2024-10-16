@@ -2,14 +2,15 @@
 Run **PostgresDB** in Nodepp
 
 ## Dependencies
+```bash
+#postgres-dev
+  🪟: pacman -S mingw-w64-x86_64-postgresql
+  🐧: sudo apt install libpq-dev
 
-- postgres-dev
-  - 🪟: `pacman -S mingw-w64-x86_64-postgresql`
-  - 🐧: `sudo apt install libpq-dev`
-
-- Openssl
-  - 🪟: `pacman -S mingw-w64-ucrt-x86_64-openssl`
-  - 🐧: `sudo apt install libssl-dev`
+#Openssl
+  🪟: pacman -S mingw-w64-ucrt-x86_64-openssl
+  🐧: sudo apt install libssl-dev
+```
 
 ## Example
 ```cpp
@@ -61,4 +62,6 @@ void onMain() {
 ```
 
 ## Compilation
-`g++ -o main main.cpp -I ./include -lpq -lssl -lcrypto ; ./main`
+```bash
+g++ -o main main.cpp -I ./include -lpq -lssl -lcrypto ; ./main
+```
