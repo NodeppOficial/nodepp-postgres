@@ -21,8 +21,8 @@ protected:
 
 public:
 
-    template< class T, class U, class V, class Q > gnEmit( T& fd, U& res, V& cb, Q& self ){
-    gnStart
+    template< class T, class U, class V, class Q > coEmit( T& fd, U& res, V& cb, Q& self ){
+    coStart
 
         num_row = PQntuples(res); 
         num_col = PQnfields(res);
@@ -38,7 +38,7 @@ public:
  
         PQclear(res);
 
-    gnStop
+    coStop
     }
 
 };}}
